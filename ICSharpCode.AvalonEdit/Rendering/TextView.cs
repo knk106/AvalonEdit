@@ -901,6 +901,26 @@ namespace ICSharpCode.AvalonEdit.Rendering
 
 		Size lastAvailableSize;
 		bool inMeasure;
+		double minimumExtentWidth;
+
+		/// <summary>
+		/// Gets/Sets the least width of the horizontal scroll area.
+		/// By default (0) the scroll area is as wide as the longest line currently visible, so it changes as lines of
+		/// other lengths scroll into view, and the horizontal scroll bar can lose its thumb.
+		/// A host that knows the width of the longest line of the whole document can set it here, so the horizontal
+		/// scroll range stays the same everywhere in the document.
+		/// </summary>
+		public double MinimumExtentWidth {
+			get { return minimumExtentWidth; }
+			set {
+				if (double.IsNaN(value) || double.IsInfinity(value) || value < 0)
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Value must be a finite, non-negative number");
+				if (minimumExtentWidth != value) {
+					minimumExtentWidth = value;
+					InvalidateMeasure();
+				}
+			}
+		}
 
 		/// <inheritdoc/>
 		protected override Size MeasureOverride(Size availableSize)
@@ -938,6 +958,7 @@ namespace ICSharpCode.AvalonEdit.Rendering
 			// remove inline objects only at the end, so that inline objects that were re-used are not removed from the editor
 			RemoveInlineObjectsNow();
 
+			maxWidth = Math.Max(maxWidth, minimumExtentWidth);
 			maxWidth += AdditionalHorizontalScrollAmount;
 			double heightTreeHeight = this.DocumentHeight;
 			TextEditorOptions options = this.Options;
